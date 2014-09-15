@@ -63,7 +63,7 @@ public class SubscriptionCoordinationManagerImpl implements SubscriptionCoordina
     @Override
     public void notifySubscriptionChange(final SubscriptionNotification subscriptionNotification) {
         if (log.isDebugEnabled()) {
-            log.debug("Handling cluster gossip: Notifying subscribers on Subscription changes ");
+            log.debug("Handling cluster gossip: Notifying subscribers on Subscription changes");
         }
         Runnable r = new Runnable() {
             @Override
@@ -76,8 +76,7 @@ public class SubscriptionCoordinationManagerImpl implements SubscriptionCoordina
                     try {
                         listener.subscriptionsChanged(subscriptionNotification);
                     } catch (Exception e) {
-                        log.error("Error handling the subscription change ", e);
-                        throw new RuntimeException(e);
+                        log.error("Error while handling the subscription change ", e);
                     }
                 }
             }

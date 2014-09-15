@@ -33,8 +33,6 @@ public class QueueChangedListener implements MessageListener {
     //TODO Implement this
     //This should be called only for queue purge operations
     public void onMessage(Message message) {
-        if (log.isInfoEnabled()) {
-            log.info("Handling cluster gossip: On message triggered in QueueChangedListener");
-        }
+        log.info("Handling cluster gossip: On message triggered in QueueChangedListener");
     }
 }

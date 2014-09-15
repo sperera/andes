@@ -39,10 +39,8 @@ public class SubscriptionChangedListener implements MessageListener {
      */
     @Override
     public void onMessage(Message message) {
-        if (log.isInfoEnabled()) {
-            log.info("Handling cluster gossip: received a subscriber changed notification");
-        }
-        ClusterResourceHolder.getInstance().getSubscriptionCoordinationManager().handleClusterSubscriptionChange(
-                (SubscriptionNotification) message.getMessageObject());
+        SubscriptionNotification subscriptionNotification = (SubscriptionNotification) message.getMessageObject();
+        log.info("Handling cluster gossip: received a subscriber changed notification. Queue:" + subscriptionNotification.getAndesQueue().queueName);
+        ClusterResourceHolder.getInstance().getSubscriptionCoordinationManager().handleClusterSubscriptionChange(subscriptionNotification);
     }
 }

@@ -114,12 +114,10 @@ public class ClusterManager {
     /**
      * Handles changes needs to be done in current node when a node joins to the cluster
      */
-    public void handleNewNodeJoiningToCluster(Member node) {
+    public void memberAdded(Member node) {
         String nodeId = hazelcastAgent.getIdOfNode(node);
 
-        if (log.isInfoEnabled()) {
-            log.info("Handling cluster gossip: Node with ID " + nodeId + " joined the cluster");
-        }
+        log.info("Handling cluster gossip: Node with ID " + nodeId + " joined the cluster");
 
         reAssignGlobalQueueSyncId();
         handleGlobalQueueAddition();
@@ -128,11 +126,11 @@ public class ClusterManager {
     /**
      * Handles changes needs to be done in current node when a node leaves the cluster
      */
-    public void handleNodeLeavingCluster(Member node) throws AndesException {
+    public void memberRemoved(Member node) throws AndesException {
         String deletedNodeId = hazelcastAgent.getIdOfNode(node);
 
-        if (log.isInfoEnabled()) {
-            log.info("Handling cluster gossip: Node with ID " + deletedNodeId + " left the cluster");
+        if (log.isDebugEnabled()) {
+            log.debug("Handling cluster gossip: Node with ID " + deletedNodeId + " left the cluster");
         }
 
         //refresh global queue sync ID
@@ -255,7 +253,7 @@ public class ClusterManager {
 
     public int getUniqueIdForLocalNode() {
         if (AndesContext.getInstance().isClusteringEnabled()) {
-            return hazelcastAgent.getUniqueIdForTheNode();
+            return hazelcastAgent.getUniqueIdForNode();
         }
         return 0;
     }
@@ -293,11 +291,7 @@ public class ClusterManager {
             messageList = messageStore.getNextNMessageMetadataFromQueue(nodeQueueAddress, lastProcessedMessageID, 40);
         }
 
-        if (log.isInfoEnabled()) {
-            log.info("Moved " + numberOfMessagesMoved
-                    + " Number of Messages from Node Queue "
-                    + nodeQueueName + "to Global Queues ");
-        }
+        log.info("Moved " + numberOfMessagesMoved + " Number of Messages from Node Queue " + nodeQueueName + "to Global Queues ");
 
     }
 
@@ -315,9 +309,7 @@ public class ClusterManager {
 
         clearAllPersistedStatesOfDissapearedNode(nodeId);
 
-        if (log.isInfoEnabled()) {
-            log.info("NodeID:" + this.nodeId);
-        }
+        log.info("NodeID:" + this.nodeId);
 
         andesContextStore.storeNodeDetails(nodeId, config.getBindIpAddress());
 
@@ -330,9 +322,7 @@ public class ClusterManager {
 
         this.hazelcastAgent = HazelcastAgent.getInstance();
         this.nodeId = this.hazelcastAgent.getNodeId();
-        if (log.isInfoEnabled()) {
-            log.info("NodeID:" + this.nodeId);
-        }
+        log.info("NodeID:" + this.nodeId);
 
         //add node information to durable store
         andesContextStore.storeNodeDetails(nodeId, config.getBindIpAddress());
@@ -353,7 +343,7 @@ public class ClusterManager {
                 checkAndCopyMessagesOfNodeQueueBackToGlobalQueue(AndesUtils.getNodeQueueNameForNodeId(storedNodeId));
             }
         }
-        handleNewNodeJoiningToCluster(hazelcastAgent.getLocalMember());
+        memberAdded(hazelcastAgent.getLocalMember());
     }
 
     /**
@@ -396,7 +386,7 @@ public class ClusterManager {
 
     /**
      * When redistributing the global queues among cluster nodes, some nodes will get more global queues
-     * than the existing global queues. This case is handled by below methods.
+     * than the existing global queues. This case is handled by below method.
      */
     private void handleGlobalQueueAddition() {
         //get the current globalQueue Assignments
@@ -429,7 +419,7 @@ public class ClusterManager {
      */
     private void clearAllPersistedStatesOfDissapearedNode(String nodeID) throws AndesException {
         if (log.isDebugEnabled()) {
-            log.info("Clearing the Persisted State of Node with ID " + nodeID);
+            log.debug("Clearing the Persisted State of Node with ID " + nodeID);
         }
 
         //remove node from nodes list

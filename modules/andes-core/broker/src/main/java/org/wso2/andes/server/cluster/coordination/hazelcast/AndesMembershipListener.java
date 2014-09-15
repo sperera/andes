@@ -22,6 +22,7 @@ import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.andes.kernel.AndesException;
 import org.wso2.andes.server.ClusterResourceHolder;
 import org.wso2.andes.server.cluster.ClusterManager;
 
@@ -40,14 +41,12 @@ public class AndesMembershipListener implements MembershipListener {
     public void memberAdded(MembershipEvent membershipEvent) {
         Member member = membershipEvent.getMember();
 
-        if(log.isInfoEnabled()){
-            log.info("Handling cluster gossip: New member joined to the cluster. Member Socket Address:"
-                    + member.getInetSocketAddress()
-                    + " UUID:"
-                    + member.getUuid());
-        }
+        log.info("Handling cluster gossip: New member joined to the cluster. Member Socket Address:" +
+                member.getInetSocketAddress() +
+                " UUID:" +
+                member.getUuid());
 
-        ClusterResourceHolder.getInstance().getClusterManager().handleNewNodeJoiningToCluster(member);
+        ClusterResourceHolder.getInstance().getClusterManager().memberAdded(member);
     }
 
     /**
@@ -58,19 +57,17 @@ public class AndesMembershipListener implements MembershipListener {
     @Override
     public void memberRemoved(MembershipEvent membershipEvent) {
         Member member = membershipEvent.getMember();
-        if(log.isInfoEnabled()){
-            log.info("Handling cluster gossip: A member left the cluster. Member Socket Address:"
-                    + member.getInetSocketAddress()
-                    + " UUID:"
-                    + member.getUuid());
-        }
+        log.info("Handling cluster gossip: A member left the cluster. Member Socket Address:" +
+                member.getInetSocketAddress() +
+                " UUID:" +
+                member.getUuid());
 
         ClusterManager clusterManager = ClusterResourceHolder.getInstance().getClusterManager();
+
         try {
-            clusterManager.handleNodeLeavingCluster(member);
-        } catch (Exception e) {
+            clusterManager.memberRemoved(member);
+        } catch (AndesException e) {
             log.error("Error while handling node removal, NodeID:" + clusterManager.getNodeId(member), e);
-            throw new RuntimeException(e);
         }
     }
 }

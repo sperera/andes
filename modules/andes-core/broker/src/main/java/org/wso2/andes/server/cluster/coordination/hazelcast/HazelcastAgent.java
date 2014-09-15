@@ -26,10 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.andes.server.cluster.coordination.CoordinationConstants;
 import org.wso2.andes.server.cluster.coordination.SubscriptionNotification;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This is a singleton class, which contains all Hazelcast related operations.
@@ -40,7 +37,7 @@ public class HazelcastAgent {
     /**
      * Singleton HazelcastAgent Instance.
      */
-    private static volatile HazelcastAgent hazelcastAgentInstance = null;
+    private static HazelcastAgent hazelcastAgentInstance = new HazelcastAgent();
 
     /**
      * Hazelcast instance exposed by Carbon.
@@ -50,7 +47,7 @@ public class HazelcastAgent {
     /**
      * Distributed topic to communicate subscription change notifications among cluster nodes.
      */
-    private ITopic subscriptionChangedNotifierChannel;
+    private ITopic<SubscriptionNotification> subscriptionChangedNotifierChannel;
 
     /**
      * Distributed topic to communicate queue purge notifications among cluster nodes.
@@ -69,14 +66,6 @@ public class HazelcastAgent {
      * @return HazelcastAgent
      */
     public static HazelcastAgent getInstance() {
-        if (hazelcastAgentInstance == null) {
-            synchronized (HazelcastAgent.class) {
-                if (hazelcastAgentInstance == null) {
-                    hazelcastAgentInstance = new HazelcastAgent();
-                }
-            }
-        }
-
         return hazelcastAgentInstance;
     }
 
@@ -87,9 +76,7 @@ public class HazelcastAgent {
      */
     @SuppressWarnings("unchecked")
     public void init(HazelcastInstance hazelcastInstance) {
-        if (log.isInfoEnabled()) {
-            log.info("Initializing Hazelcast Agent");
-        }
+        log.info("Initializing Hazelcast Agent");
         this.hazelcastInstance = hazelcastInstance;
         this.hazelcastInstance.getCluster().addMembershipListener(new AndesMembershipListener());
 
@@ -106,13 +93,11 @@ public class HazelcastAgent {
         IdGenerator idGenerator = hazelcastInstance.getIdGenerator(CoordinationConstants.HAZELCAST_ID_GENERATOR_NAME);
         this.uniqueIdOfLocalMember = (int) idGenerator.newId();
 
-        if (log.isInfoEnabled()) {
-            log.info("Successfully initialized Hazelcast Agent");
-        }
-
         if (log.isDebugEnabled()) {
             log.debug("Unique ID generation for message ID generation:" + uniqueIdOfLocalMember);
         }
+
+        log.info("Successfully initialized Hazelcast Agent");
     }
 
     /**
@@ -122,10 +107,10 @@ public class HazelcastAgent {
      */
     public String getNodeId() {
         Member localMember = hazelcastInstance.getCluster().getLocalMember();
-        return CoordinationConstants.NODE_NAME_PREFIX
-                + localMember.getInetSocketAddress().getAddress()
-                + "_"
-                + localMember.getUuid();
+        return CoordinationConstants.NODE_NAME_PREFIX +
+                localMember.getInetSocketAddress().getAddress() +
+                "_" +
+                localMember.getUuid();
     }
 
     /**
@@ -146,10 +131,10 @@ public class HazelcastAgent {
         Set<Member> members = this.getAllClusterMembers();
         List<String> nodeIDList = new ArrayList<String>();
         for (Member member : members) {
-            nodeIDList.add(CoordinationConstants.NODE_NAME_PREFIX
-                    + member.getInetSocketAddress().getAddress()
-                    + "_"
-                    + member.getUuid());
+            nodeIDList.add(CoordinationConstants.NODE_NAME_PREFIX +
+                    member.getInetSocketAddress().getAddress() +
+                    "_" +
+                    member.getUuid());
         }
 
         return nodeIDList;
@@ -178,7 +163,7 @@ public class HazelcastAgent {
      *
      * @return unique ID assigned for the local node.
      */
-    public int getUniqueIdForTheNode() {
+    public int getUniqueIdForNode() {
         return uniqueIdOfLocalMember;
     }
 
@@ -189,10 +174,10 @@ public class HazelcastAgent {
      * @return node ID
      */
     public String getIdOfNode(Member node) {
-        return CoordinationConstants.NODE_NAME_PREFIX
-                + node.getInetSocketAddress().getAddress()
-                + "_"
-                + node.getUuid();
+        return CoordinationConstants.NODE_NAME_PREFIX +
+                node.getInetSocketAddress().getAddress() +
+                "_" +
+                node.getUuid();
     }
 
     /**
@@ -203,12 +188,12 @@ public class HazelcastAgent {
      * @return the index given to the node according to its UUID
      */
     public int getIndexOfNode(Member node) {
-        List<String> membersUniqueRepresentations = new ArrayList<String>();
+        TreeSet<String> membersUniqueRepresentations = new TreeSet<String>();
         for (Member member : this.getAllClusterMembers()) {
             membersUniqueRepresentations.add(member.getUuid());
         }
-        Collections.sort(membersUniqueRepresentations);
-        return membersUniqueRepresentations.indexOf(node.getUuid());
+
+        return membersUniqueRepresentations.headSet(node.getUuid()).size();
     }
 
     /**
@@ -225,11 +210,8 @@ public class HazelcastAgent {
      *
      * @param subscriptionNotification notification
      */
-    @SuppressWarnings("unchecked")
     public void notifySubscriberChanged(SubscriptionNotification subscriptionNotification) {
-        if (log.isInfoEnabled()) {
-            log.info("Handling cluster gossip: Sending subscriber changed notification to cluster...");
-        }
+        log.info("Handling cluster gossip: Sending subscriber changed notification to cluster...");
         this.subscriptionChangedNotifierChannel.publish(subscriptionNotification);
     }
 }

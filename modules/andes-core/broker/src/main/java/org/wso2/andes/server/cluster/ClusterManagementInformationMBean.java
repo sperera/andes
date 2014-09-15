@@ -183,6 +183,5 @@ public class ClusterManagementInformationMBean extends AMQManagedObject implemen
 
     public int getSubscriberCount(@MBeanOperationParameter(name = "Topic", description = "Topic name") String topic) {
         throw new UnsupportedOperationException("Check what this should return (subscription IDs?)");
-
     }
 }
